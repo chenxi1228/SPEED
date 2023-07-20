@@ -14,6 +14,23 @@ For ML25m, please download data from the [Tianchi](https://tianchi.aliyun.com/da
 
 
 ## large-scale Distributed Computing Module (DCM)
+### Regular training
+
+
+### Training big datasets
+If you would like to train the three big datasets, please use the codes in the branch "big_datasets".
+In this branch accelerate the whole training process by optimising the I/O process and omitting unnecessary inductive validation and only using testing_from_begin setting.
+
+You should first save the graphs and sub-graphs by running for different (parameters): `--datasets`, `--part_exp`, `--gpu`, `--divide_method` and `--seed`, you may also would like to set a different `--prefix`:
+```
+python ddp_train_self_supervised.py --gpu 0,1,2,3 --data [DATA] --part_exp [2/4] --[jodie/tgn/tgat/dyrep/tige] --prefix [add_your_prefered_prefix] --top_k [0/1/5/10/-1] --seed [0/1/2...] --sync_mode [last/none/average] --divide_method pre --backup_memory_to_cpu --testing_on_cpu --no_ind_val --save_mode save
+```
+
+Then you can reuse the saved graphs by setting `--save_mode read` for training for different top_k or other parameters.
+
+```
+python ddp_train_self_supervised.py --gpu 0,1,2,3 --data [DATA] --part_exp [2/4] --[jodie/tgn/tgat/dyrep/tige] --prefix [add_your_prefered_prefix] --top_k [0/1/5/10/-1] --seed [0/1/2...] --sync_mode [last/none/average] --divide_method pre --backup_memory_to_cpu --testing_on_cpu --no_ind_val --save_mode read
+```
 
 ```
 python train_self_supervised.py --data [DATA] --msg_src [left/right] --upd_src [left/right] --restarter [seq/static] --restart_prob [0/0.001/...]
