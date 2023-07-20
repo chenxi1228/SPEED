@@ -100,13 +100,9 @@ def run(rank, world_size, *, prefix,
     if divide_method == 'pre':
         DIVIDED_NODES_PATHs = []
         for i in range(2**part_exp):
-            # if top_k == 0:
-            #     DIVIDED_NODES_PATH = f'./divided_nodes/{data}/{data}_{2**part_exp}parts/output{i}.txt'
-            # else:
             DIVIDED_NODES_PATH = f'./divided_nodes_seed/{data}/{seed}/{data}_{2**part_exp}parts_top{top_k}/output{i}.txt'
             DIVIDED_NODES_PATHs.append(DIVIDED_NODES_PATH)
         if top_k == 0:
-            # SHARED_NODES_PATH = f'./divided_nodes/{data}/{data}_{2**part_exp}parts/outputshared.txt'
             SHARED_NODES_PATH = None
         else:
             SHARED_NODES_PATH = f'./divided_nodes_seed/{data}/{seed}/{data}_{2**part_exp}parts_top{top_k}/outputshared.txt'
@@ -121,7 +117,6 @@ def run(rank, world_size, *, prefix,
             DIVIDED_NODES_PATH = f'./divided_nodes_seed/{data}_random/{seed}/{data}_{2**part_exp}parts/output{i}.txt'
             DIVIDED_NODES_PATHs.append(DIVIDED_NODES_PATH)
 
-    # if rank == 0:  # only the first process logs and saves
     pathlib.Path("graph_list/").mkdir(parents=True, exist_ok=True)
 
     pathlib.Path("./saved_models/").mkdir(parents=True, exist_ok=True)
@@ -154,7 +149,6 @@ def run(rank, world_size, *, prefix,
         # Init
         seed_all(seed)
         # ============= Load Data ===========
-        # TODO: 此处part_exp参数需要修改，init_data方法中会拆分一次，需要修改init_data方法，此处改为0
         (
             nfeats, efeats, full_data, train_data, val_data, test_data,
             inductive_val_data, inductive_test_data
@@ -185,10 +179,8 @@ def run(rank, world_size, *, prefix,
                                                                        "full_sub_graph", rank, pin_memory=True)
             logger.info(f'[I/O TIME] Init full_sub_graphs use {(time.time()-init_data_time):.2f}')
 
-            # todo: 对于不随机采样的情况，如果不加n_shared_nodes，可能会报out of index的错
             n_nodes = torch.tensor([full_sub_graph.num_node + n_shared_nodes + 2]).to(device)
             dist.all_reduce(n_nodes, op=dist.ReduceOp.MAX)
-            # 此处可用 full_sub_data.get_stats()
             ts_delta_mean, ts_delta_std, *_ = full_data.get_stats()
             n_edges = torch.tensor([len(full_sub_data)]).to(device)
             dist.all_reduce(n_edges, op=dist.ReduceOp.MAX)
@@ -217,7 +209,6 @@ def run(rank, world_size, *, prefix,
             n_edges *= parts_multi
             n_nodes = torch.tensor([n_nodes]).to(device)
             n_edges = torch.tensor([n_edges]).to(device)
-            # 此处*不*可用 full_sub_data.get_stats()
         else:
             raise ValueError("Check world_size and graph parts! You are using {} GPU(s),"
                              " but the graph have been divided to {} parts".format(world_size, len(divided_nodes)))
@@ -304,6 +295,5 @@ if __name__ == '__main__':
     os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
     os.environ['MASTER_ADDR'] = 'localhost'
     os.environ['MASTER_PORT'] = args.port
-    # os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:32"
 
     mp.spawn(worker, nprocs=WORLD_SIZE, args=(WORLD_SIZE, args), join=True, daemon=True)
