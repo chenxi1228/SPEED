@@ -127,7 +127,7 @@ def evaluate(model, eval_dls, val_dl, ind_val_dl, device, restart_prob, warmup_s
     start_eval_t0 = time.time()
     model.eval()
 
-    val_warmup_dl, offline_dl, _, _ = eval_dls
+    val_warmup_dl, offline_dl = eval_dls
 
     restart_mode = restart_prob > 0
 
@@ -248,41 +248,45 @@ def divided_nodes_from_txt(nodes_paths, shared_nodes_path):
 def infinite_loop(data_loader, max_len):
     while True:
         it = BackgroundThreadGenerator(data_loader)
+        # 在-最长的-进程中打印训练进度
+        # if len(data_loader) == max_len:
         if is_main_process():
             it = tqdm(it, total=len(data_loader), ncols=50)
         for i, data in enumerate(it):
             yield data, (i == 0), (i == len(data_loader) - 1)
 
 
-def rewrite_state_dict(model_state, model_state_sep, n_nodes, shared_nodes, sub_nodes, buffer_list, testing_mode, rank):
-    if model_state is None:
-        model_state_rewritten = model_state_sep
-    else:
-        model_state_rewritten = model_state
+def rewrite_state_dict(model_state, n_nodes, shared_nodes, sub_nodes, buffer_list, testing_mode, rank):
     for buffer in buffer_list:
-        memory = model_state_sep[buffer]
+        memory = model_state[buffer]
         shape = list(memory.shape)
         shape[0] = n_nodes
-        if model_state is None:
-            new_memory = torch.zeros(shape, dtype=memory.dtype)
-        else:
-            new_memory = model_state_rewritten[buffer]
+        new_memory = torch.zeros(shape, dtype=memory.dtype)
 
         if testing_mode == "from_val" or (testing_mode == "hybrid" and rank == 1):
             for i in range(len(sub_nodes)):
                 original_index = sub_nodes[i]
                 new_memory[original_index] = memory[i]
+            # if shared_nodes:
+            #     for i in range(len(shared_nodes)):
+            #         original_index = shared_nodes[i]
+            #         new_memory[original_index] = memory[i]
         elif testing_mode == "from_begin" or (testing_mode == "hybrid" and rank == 0):
             pass
 
-        model_state_rewritten[buffer] = new_memory
-    return model_state_rewritten
+        model_state[buffer] = new_memory
+    return model_state
 
 
 def reconstruct_graph_dl(data, sub_nodes, shared_nodes, strategy, seed, n_neighbors, n_layers, restarter_type, hist_len,
-                         bs, pin_memory):
+                         bs, save_mode, ds_name, divide_method, n_parts, top_k, graph_type, rank, pin_memory):
     sub_data, global_list = data.get_subset_and_reindex_by_nodes(sub_nodes, shared_nodes)
-    sub_graph = Graph.from_data(sub_data, strategy=strategy, seed=seed)
+    
+    if save_mode == "none":
+        sub_graph = Graph.from_data(sub_data, strategy=strategy, seed=seed)
+    else:
+        # sub_graph = Graph.from_npy(sub_data, graph_type, ds_name, n_parts, save_mode, top_k, rank, divide_method, strategy=strategy, seed=seed)
+        sub_graph = Graph.from_npy(save_mode, sub_data, ds_name, seed, divide_method, n_parts, top_k, graph_type, rank, strategy=strategy)
 
     sub_collator = GraphCollator(sub_graph, n_neighbors, n_layers, restarter=restarter_type, hist_len=hist_len)
     sub_dl = DataLoader(sub_data, batch_size=bs, collate_fn=sub_collator, pin_memory=pin_memory)

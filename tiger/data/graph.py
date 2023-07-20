@@ -41,6 +41,11 @@ class Graph:
         adj_list = data2adjlist(data, max_node_id=max_node_id)
         return cls(adj_list, strategy=strategy, seed=seed)
     
+    @classmethod
+    def from_npy(cls, save_mode, data, dataset_name, seed, divide_method, n_parts, top_k, graph_type, rank, strategy='recent_nodes', max_node_id=None):
+        adj_list = data2adjlist_npy(save_mode, data, dataset_name, seed, divide_method, n_parts, top_k, graph_type, rank, max_node_id)
+        return cls(adj_list, strategy=strategy, seed=seed)
+    
     @lru_cache(10000)
     def find_before(self, nid: int, t: float
                    ) -> Tuple[List[int], List[int], List[float], List[int]]:
@@ -239,3 +244,25 @@ def data2adjlist(data: 'InteractionData', max_node_id: Optional[int]=None
         adj_list[src].append((dst, eid, t, 0))  # 0: the target node is src
         adj_list[dst].append((src, eid, t, 1))  # 1: the target node is dst
     return adj_list
+
+
+def data2adjlist_npy(save_mode: str, data: 'InteractionData', dataset_name: str, seed: int, divide_method: str,
+                     n_parts: int, top_k: int, graph_type: str, rank: int, max_node_id: Optional[int]=None
+                ) -> List[Tuple[int, int, float, bool]]:
+    path = "graph_list/{}_seed{}_{}_part{}_top{}_{}_rank{}.npy".format(dataset_name, seed, divide_method, n_parts, top_k, graph_type, rank)
+    if save_mode == "save":
+        if max_node_id is None:
+            max_node_id = max(max(data.src), max(data.dst))
+        adj_list = [[] for _ in range(max_node_id + 1)]
+        for src, dst, _, t, eid, _ in data:
+            # flag = 0 for null value
+            adj_list[src].append((dst, eid, t, 0))  # 0: the target node is src
+            adj_list[dst].append((src, eid, t, 1))  # 1: the target node is dst
+
+        adj_list_np = np.array(adj_list)
+        np.save(path, adj_list_np)
+    elif save_mode == "read":
+        adj_list_np = np.load(path, allow_pickle=True)
+        adj_list = adj_list_np.tolist()
+    return adj_list
+

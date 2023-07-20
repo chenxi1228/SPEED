@@ -115,7 +115,8 @@ def init_data(data, root, seed, rank=None, world_size=None, *,
               subset, strategy,
               n_layers, n_neighbors,
               restarter_type, hist_len,
-              part_exp):
+              part_exp,
+              save_mode, divide_method, n_parts, top_k):
     (
         nfeats, efeats, full_data, train_data, val_data, test_data,
         inductive_val_data, inductive_test_data
@@ -129,28 +130,23 @@ def init_data(data, root, seed, rank=None, world_size=None, *,
         train_end_id = math.ceil(len(train_data) * subset)
         offline_data = train_data.get_subset(train_end_id, len(train_data))
         train_data = train_data.get_subset(0, train_end_id)
-    train_graph = Graph.from_data(train_data, strategy=strategy, seed=seed)
-    full_graph = Graph.from_data(full_data, strategy=strategy, seed=seed)
+
+    if save_mode == "none":
+        train_graph = Graph.from_data(train_data, strategy=strategy, seed=seed)
+        full_graph = Graph.from_data(full_data, strategy=strategy, seed=seed)
+    elif save_mode == "save":
+        full_graph = Graph.from_npy(save_mode, full_data, data, seed, divide_method, n_parts, "for_all", "full_graph", "for_all", strategy=strategy)
+        train_graph = Graph.from_npy(save_mode, train_data, data, seed, divide_method, n_parts, "for_all", "train_graph", "for_all", strategy=strategy)
+    elif save_mode == "read":
+        full_graph = Graph.from_npy(save_mode, full_data, data, seed, divide_method, n_parts, "for_all", "full_graph", "for_all", strategy=strategy)
+        train_graph = Graph.from_npy(save_mode, train_data, data, seed, divide_method, n_parts, "for_all", "train_graph", "for_all", strategy=strategy)
 
     train_collator = GraphCollator(train_graph, n_neighbors, n_layers,
                                    restarter=restarter_type, hist_len=hist_len)
     eval_collator = GraphCollator(full_graph, n_neighbors, n_layers,
                                   restarter=restarter_type, hist_len=hist_len)
 
-    if world_size is not None:
-        train_sampler = ChunkSampler(len(train_data), rank=rank, world_size=world_size, bs=bs, seed=seed)
-        train_dl = DataLoader(
-            train_data, batch_size=bs, sampler=train_sampler,
-            collate_fn=train_collator, pin_memory=True
-        )  # distributed Dataloader
-        offline_dl = None
-    else:
-        train_dl = DataLoader(train_data, batch_size=bs, collate_fn=train_collator, pin_memory=True,
-                              num_workers=num_workers)
-        if subset < 1.0:
-            offline_dl = DataLoader(offline_data, batch_size=bs, collate_fn=eval_collator)
-        else:
-            offline_dl = None
+    offline_dl = None
 
     val_dl = DataLoader(val_data, batch_size=bs, collate_fn=eval_collator)
     ind_val_dl = DataLoader(inductive_val_data, batch_size=bs, collate_fn=eval_collator)
@@ -160,21 +156,12 @@ def init_data(data, root, seed, rank=None, world_size=None, *,
     test_train_dl = DataLoader(train_data, batch_size=bs, collate_fn=train_collator, pin_memory=True,
                               num_workers=num_workers)
 
-    if warmup_steps > 0:
-        if len(train_data) - warmup_steps < 0 or len(val_data) - warmup_steps < 0:
-            raise ValueError('Too many warmup steps!')
-
-        val_warmup_data = train_data.get_subset(len(train_data) - warmup_steps, len(train_data))
-        test_warmup_data = val_data.get_subset(len(val_data) - warmup_steps, len(val_data))
-        val_warmup_dl = DataLoader(val_warmup_data, batch_size=bs, collate_fn=train_collator)
-        test_warmup_dl = DataLoader(test_warmup_data, batch_size=bs, collate_fn=eval_collator)
-    else:
-        val_warmup_dl = test_warmup_dl = None
+    val_warmup_dl = test_warmup_dl = None
 
     basic_data = (nfeats, efeats, full_data, train_data, val_data, test_data,
                   inductive_val_data, inductive_test_data)
     graphs = (train_graph, full_graph)
-    dls = (train_dl, offline_dl, val_dl, ind_val_dl, test_dl, ind_test_dl, val_warmup_dl, test_warmup_dl, test_train_dl)
+    dls = (offline_dl, val_dl, ind_val_dl, test_dl, ind_test_dl, val_warmup_dl, test_warmup_dl, test_train_dl)
 
     return basic_data, graphs, dls
 

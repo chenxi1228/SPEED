@@ -33,6 +33,8 @@ from train_utils import EarlyStopMonitor, hash_args, seed_all, get_logger, dist_
 from ddp_train_utils import train_one_epoch, evaluate, divide_nodes, infinite_loop, rewrite_state_dict, \
     reconstruct_graph_dl, divided_nodes_from_txt, BackupMem, sync_memory
 
+import sys
+
 
 def worker(rank, world_size, args):
     dist_setup(rank, world_size)
@@ -55,7 +57,7 @@ def worker(rank, world_size, args):
         divide_method=args.divide_method, testing_mode=args.testing_mode,
         testing_on_cpu=args.testing_on_cpu, backup_memory_cpu=args.backup_memory_to_cpu,
         top_k=args.top_k, static_shared_nodes=args.static_shared_nodes, sync_mode=args.sync_mode,
-        shuffle_parts=args.shuffle_parts, no_ind_val=args.no_ind_val
+        shuffle_parts=args.shuffle_parts, no_ind_val=args.no_ind_val, save_mode=args.save_mode
         )
 
     dist_cleanup()
@@ -74,7 +76,8 @@ def run(rank, world_size, *, prefix,
         recover_from, recover_step, force, warmup_steps,
         dyrep, embedding_type, no_memory, divide_method,
         testing_mode, testing_on_cpu, backup_memory_cpu,
-        top_k, static_shared_nodes, sync_mode, shuffle_parts, no_ind_val
+        top_k, static_shared_nodes, sync_mode, shuffle_parts, no_ind_val,
+        save_mode
         ):
     # Get hash
     args = {k: v for k, v in locals().items()
@@ -93,42 +96,40 @@ def run(rank, world_size, *, prefix,
     MODEL_SAVE_PATH = f'./saved_models/{prefix}.pth'
     RESULT_SAVE_PATH = f"results/{prefix}.json"
     PICKLE_SAVE_PATH = "results/{}.pkl".format(prefix)
-    if testing_mode == "hybrid":
-        RESULT_SAVE_PATH_from_val = f"results/from_val_{prefix}.json"
-        PICKLE_SAVE_PATH_from_val = "results/from_val_{}.pkl".format(prefix)
-        RESULT_SAVE_PATH_from_begin = f"results/from_begin_{prefix}.json"
-        PICKLE_SAVE_PATH_from_begin = "results/from_begin_{}.pkl".format(prefix)
 
     if divide_method == 'pre':
         DIVIDED_NODES_PATHs = []
         for i in range(2**part_exp):
-            DIVIDED_NODES_PATH = f'./divided_nodes/{data}/{data}_{2**part_exp}parts_top{top_k}/output{i}.txt'
+            DIVIDED_NODES_PATH = f'./divided_nodes_seed/{data}/{seed}/{data}_{2**part_exp}parts_top{top_k}/output{i}.txt'
             DIVIDED_NODES_PATHs.append(DIVIDED_NODES_PATH)
         if top_k == 0:
+            # SHARED_NODES_PATH = f'./divided_nodes/{data}/{data}_{2**part_exp}parts/outputshared.txt'
             SHARED_NODES_PATH = None
         else:
-            SHARED_NODES_PATH = f'./divided_nodes/{data}/{data}_{2**part_exp}parts_top{top_k}/outputshared.txt'
+            SHARED_NODES_PATH = f'./divided_nodes_seed/{data}/{seed}/{data}_{2**part_exp}parts_top{top_k}/outputshared.txt'
     elif divide_method == 'pre_kl':
         DIVIDED_NODES_PATHs = []
         for i in range(2**part_exp):
-            DIVIDED_NODES_PATH = f'./divided_nodes/{data}_kl/{data}_{2**part_exp}parts/output{i}.txt'
+            DIVIDED_NODES_PATH = f'./divided_nodes_seed/{data}_kl/{seed}/{data}_{2**part_exp}parts/output{i}.txt'
             DIVIDED_NODES_PATHs.append(DIVIDED_NODES_PATH)
     elif divide_method == 'random':
         DIVIDED_NODES_PATHs = []
         for i in range(2**part_exp):
-            DIVIDED_NODES_PATH = f'./divided_nodes/{data}_random/{data}_{2**part_exp}parts/output{i}.txt'
+            DIVIDED_NODES_PATH = f'./divided_nodes_seed/{data}_random/{seed}/{data}_{2**part_exp}parts/output{i}.txt'
             DIVIDED_NODES_PATHs.append(DIVIDED_NODES_PATH)
 
     # if rank == 0:  # only the first process logs and saves
+    pathlib.Path("graph_list/").mkdir(parents=True, exist_ok=True)
+
     pathlib.Path("./saved_models/").mkdir(parents=True, exist_ok=True)
     ckpts_dir = pathlib.Path(f"./saved_checkpoints/{prefix}")
     ckpts_dir.mkdir(parents=True, exist_ok=True)
     pathlib.Path("results/").mkdir(parents=True, exist_ok=True)
-    get_checkpoint_path = lambda rank, epoch: ckpts_dir / f'rank{rank}-{epoch}.pth'
+    get_checkpoint_path = lambda epoch: ckpts_dir / f'rank{rank}-{epoch}.pth'
 
     sns_dir = pathlib.Path(f"./sub_nodes/{prefix}")
     sns_dir.mkdir(parents=True, exist_ok=True)
-    get_sub_nodes_path = lambda rank, epoch: sns_dir / f'rank{rank}-{epoch}.pth'
+    get_sub_nodes_path = lambda epoch: sns_dir / f'rank{rank}-{epoch}.pth'
 
     # init logger
     logger = get_logger(HASH) if rank == 0 or (rank == 1 and testing_mode == "hybrid") else DummyLogger()
@@ -137,7 +138,7 @@ def run(rank, world_size, *, prefix,
         logger.info(f'Model version: {MODEL_VERSION}')
         logger.info(", ".join([f"{k}={v}" for k, v in args.items()]))
 
-        if (pathlib.Path(RESULT_SAVE_PATH).exists() or pathlib.Path(RESULT_SAVE_PATH_from_val).exists()) and not force:
+        if pathlib.Path(RESULT_SAVE_PATH).exists() and not force:
             logger.info('Duplicate task! Abort!')
             return False
 
@@ -148,27 +149,13 @@ def run(rank, world_size, *, prefix,
         # Init
         seed_all(seed)
         # ============= Load Data ===========
-        basic_data, graphs, dls = init_data(
-            data, root, seed,
-            rank=rank, world_size=world_size,
-            num_workers=num_workers, bs=bs, warmup_steps=warmup_steps,
-            subset=subset, strategy=strategy,
-            n_layers=n_layers, n_neighbors=n_neighbors,
-            restarter_type=restarter_type, hist_len=hist_len,
-            part_exp=0
-        )
         (
             nfeats, efeats, full_data, train_data, val_data, test_data,
             inductive_val_data, inductive_test_data
-        ) = basic_data
-        train_graph, full_graph = graphs
-        (
-            train_dl, offline_dl, val_dl, ind_val_dl,
-            test_dl, ind_test_dl, val_warmup_dl, test_warmup_dl,
-            test_train_dl
-        ) = dls
+        ) = load_jodie_data(data, train_seed=seed, root=root)
 
-        eval_dls = (val_warmup_dl, offline_dl, val_dl, ind_val_dl)
+        val_warmup_dl = test_warmup_dl = offline_dl = None
+        eval_dls = (val_warmup_dl, offline_dl)
 
         # ============= Divide graph and Init max memory ===========
         if divide_method == "pre":
@@ -181,10 +168,11 @@ def run(rank, world_size, *, prefix,
 
         if world_size == len(divided_nodes):
             sub_nodes = divided_nodes[rank]
-
             full_sub_data, full_sub_graph, _, _, global_list_full = reconstruct_graph_dl(full_data, sub_nodes, shared_nodes, strategy, seed,
-                                                                       n_neighbors, n_layers, restarter_type, hist_len,
-                                                                       bs, pin_memory=True)
+                                                                       n_neighbors, n_layers, restarter_type, hist_len, bs,
+                                                                       save_mode, data, divide_method, 2**part_exp, top_k,
+                                                                       "full_sub_graph", rank, pin_memory=True)
+
             n_nodes = torch.tensor([full_sub_graph.num_node + n_shared_nodes + 2]).to(device)
             dist.all_reduce(n_nodes, op=dist.ReduceOp.MAX)
             ts_delta_mean, ts_delta_std, *_ = full_data.get_stats()
@@ -198,11 +186,10 @@ def run(rank, world_size, *, prefix,
             n_nodes = 0
             n_edges = 0
             for parts in divided_nodes:
-
-                full_sub_data, full_sub_graph, _, _, global_list_full= reconstruct_graph_dl(full_data, parts, shared_nodes, strategy, seed,
-                                                                           n_neighbors, n_layers, restarter_type,
-                                                                           hist_len, bs, pin_memory=True)
-
+                full_sub_data, full_sub_graph, _, _, global_list_full = reconstruct_graph_dl(full_data, parts, shared_nodes, strategy, seed,
+                                                                           n_neighbors, n_layers, restarter_type, hist_len, bs,
+                                                                           save_mode, data, divide_method, 2**part_exp, top_k,
+                                                                           "full_sub_graph", rank, pin_memory=True)
                 n_sub_nodes = full_sub_graph.num_node
                 n_sub_edges = len(full_sub_data)
                 if n_sub_nodes > n_nodes:
@@ -218,9 +205,21 @@ def run(rank, world_size, *, prefix,
             raise ValueError("Check world_size and graph parts! You are using {} GPU(s),"
                              " but the graph have been divided to {} parts".format(world_size, len(divided_nodes)))
 
+        _, train_sub_graph, train_sub_dl, _, global_list_train = reconstruct_graph_dl(train_data, sub_nodes, shared_nodes, strategy, seed,
+                                                                   n_neighbors, n_layers, restarter_type, hist_len, bs,
+                                                                   save_mode, data, divide_method, 2**part_exp, top_k,
+                                                                   "train_sub_graph", rank, pin_memory=True)
+
+        val_sub_data, _ = val_data.get_subset_and_reindex_by_nodes(sub_nodes, shared_nodes)
+
+        eval_sub_collator = GraphCollator(full_sub_graph, n_neighbors, n_layers,
+                                            restarter=restarter_type, hist_len=hist_len)
+
+        val_sub_dl = DataLoader(val_sub_data, batch_size=bs, collate_fn=eval_sub_collator)
+
         # ============= Init Model ===========
         model = init_model_for_ddp(
-            nfeats, efeats, train_graph, n_nodes.item(), n_edges.item(), ts_delta_mean, ts_delta_std, device,
+            nfeats, efeats, train_sub_graph, n_nodes.item(), n_edges.item(), ts_delta_mean, ts_delta_std, device,
             feature_as_buffer=feature_as_buffer, dim=dim,
             n_layers=n_layers, n_heads=n_heads, n_neighbors=n_neighbors,
             hit_type=hit_type, dropout=dropout,
@@ -260,7 +259,6 @@ def run(rank, world_size, *, prefix,
 
             if world_size != len(divided_nodes):
                 parts_multi = int(len(divided_nodes) / world_size)
-                # random shuffling
                 if shuffle_parts:
                     np.random.seed(epoch+seed)
                     np.random.shuffle(divided_nodes)
@@ -269,18 +267,11 @@ def run(rank, world_size, *, prefix,
                 for nodes_list in sub_nodes_lists:
                     sub_nodes = np.concatenate([sub_nodes, nodes_list])
 
-            train_sub_data, train_sub_graph, train_sub_dl, _, global_list_train = reconstruct_graph_dl(train_data, sub_nodes, shared_nodes,
-                                                                                    strategy,
-                                                                                    seed, n_neighbors, n_layers,
-                                                                                    restarter_type, hist_len, bs,
-                                                                                    pin_memory=True)
-
             offline_dl = None
 
             # Training
             model.reset()
-            model.graph = train_sub_graph
-
+            # model.graph = train_sub_graph
             max_len = torch.tensor([len(train_sub_dl)]).to(device)
             dist.all_reduce(max_len, op=dist.ReduceOp.MAX)
 
@@ -316,14 +307,7 @@ def run(rank, world_size, *, prefix,
             full_data.eval = True
             val_data.eval = True
             inductive_val_data.eval = True
-            val_sub_data, _ = val_data.get_subset_and_reindex_by_nodes(sub_nodes, shared_nodes)
-            full_sub_data, _ = full_data.get_subset_and_reindex_by_nodes(sub_nodes, shared_nodes)
 
-            full_sub_graph = Graph.from_data(full_sub_data, strategy=strategy, seed=seed)
-            eval_sub_collator = GraphCollator(full_sub_graph, n_neighbors, n_layers,
-                                              restarter=restarter_type, hist_len=hist_len)
-
-            val_sub_dl = DataLoader(val_sub_data, batch_size=bs, collate_fn=eval_sub_collator)
             if no_ind_val:
                 inductive_val_sub_data = None
                 ind_val_sub_dl = None
@@ -366,9 +350,9 @@ def run(rank, world_size, *, prefix,
             model.flush_msg()
             if shared_nodes and not static_shared_nodes:
                 sync_memory(sync_mode, model.left_memory, model.right_memory, n_shared_nodes, world_size, device)
-            torch.save(model.state_dict(), get_checkpoint_path(rank, epoch))
+            torch.save(model.state_dict(), get_checkpoint_path(epoch))
             global_list_train = global_list_train.astype(int)
-            torch.save(global_list_train, get_sub_nodes_path(rank, epoch))
+            torch.save(global_list_train, get_sub_nodes_path(epoch))
 
             if rank == 0:
                 logger.info('Epoch {:4d} total    took  {:.2f}s'.format(epoch, total_epoch_time))
@@ -404,20 +388,15 @@ def run(rank, world_size, *, prefix,
                                 'right_memory.vals', 'right_memory.update_ts', 'right_memory.active_mask',
                                 'msg_memory.vals', 'msg_memory.update_ts', 'msg_memory.active_mask',
                                 'upd_memory.vals', 'upd_memory.update_ts', 'upd_memory.active_mask']
-                
-                if rank == 0 or (testing_mode == "hybrid" and rank == 1):
-                    for r in range(world_size):
-                        best_model_path = get_checkpoint_path(r, early_stopper.best_epoch)
-                        model_state_sep = torch.load(best_model_path)
+                best_model_path = get_checkpoint_path(early_stopper.best_epoch)
+                model_state = torch.load(best_model_path)
 
-                        best_model_sub_nodes = get_sub_nodes_path(r, early_stopper.best_epoch)
-                        epoch_sub_nodes = torch.load(best_model_sub_nodes)
-                        # rewrite state_dict
-                        if r == 0:
-                            model_state_rewritten = rewrite_state_dict(None, model_state_sep, full_graph.num_node, shared_nodes, epoch_sub_nodes, buffer_list, testing_mode, rank)
-                        else:
-                            model_state_rewritten = rewrite_state_dict(model_state_rewritten, model_state_sep, full_graph.num_node, shared_nodes, epoch_sub_nodes, buffer_list, testing_mode, rank)
-                    torch.save(model_state_rewritten, get_checkpoint_path(rank, 'updated_buffer'))
+                best_model_sub_nodes = get_sub_nodes_path(early_stopper.best_epoch)
+                epoch_sub_nodes = torch.load(best_model_sub_nodes)
+                # 重写state_dict，为了使得在testing初始化时可以保留验证阶段的memory（储存在buffer中）
+                model_state = rewrite_state_dict(model_state, full_data.num_node+1, shared_nodes, epoch_sub_nodes, buffer_list, testing_mode, rank)
+                if rank == 0 or (testing_mode == "hybrid" and rank == 1):
+                    torch.save(model_state, get_checkpoint_path('updated_buffer'))
                 break
 
             # ============= Evaluate END ================
@@ -435,11 +414,11 @@ def run(rank, world_size, *, prefix,
             best_val_auc = val_aucs[best_epoch]
             best_ind_val_ap = ind_val_aps[best_epoch]
             best_ind_val_auc = ind_val_aucs[best_epoch]
-            max_memory_allocated = torch.cuda.max_memory_allocated() / 1e6
-            max_memory_reserved = torch.cuda.max_memory_reserved() / 1e6
         if rank == 0:
             # Testing
-            logger.info(f'[ Train] Max Memory Allocated: {max_memory_allocated:.2f} MB Max Memory Reserved: {max_memory_reserved:.2f} MB on Main process')
+            max_memory_allocated = torch.cuda.max_memory_allocated() / 131072
+            max_memory_reserved = torch.cuda.max_memory_reserved() / 131072
+            logger.info(f'[ Train] Max Memory Allocated: {max_memory_allocated:.2f} MiB Max Memory Reserved: {max_memory_reserved:.2f} MiB on Main process')
             logger.info(f'Loading the best model at epoch {early_stopper.best_epoch}')
             logger.info(f'[ Val] Best     ap: {best_val_ap:.4f} Best     auc: {best_val_auc:.4f}')
             if not no_ind_val:
@@ -454,6 +433,36 @@ def run(rank, world_size, *, prefix,
             # ============= Init Testing Model ===========
             if testing_on_cpu: device = "cpu"
 
+            init_data_time = time.time()
+            if save_mode == "none":
+                train_graph = Graph.from_data(train_data, strategy=strategy, seed=seed)
+                full_data.eval = False
+                full_graph = Graph.from_data(full_data, strategy=strategy, seed=seed)
+                full_data.eval = True
+            else:
+                train_graph = Graph.from_npy(save_mode, train_data, data, seed, divide_method, 2**part_exp, "for_all",
+                                             "train_graph", "for_all", strategy=strategy)
+                full_data.eval = False
+                full_graph = Graph.from_npy(save_mode, full_data, data, seed, divide_method, 2**part_exp, "for_all",
+                                            "full_graph", "for_all", strategy=strategy)
+                full_data.eval = True
+
+            train_collator = GraphCollator(train_graph, n_neighbors, n_layers,
+                                           restarter=restarter_type, hist_len=hist_len)
+            eval_collator = GraphCollator(full_graph, n_neighbors, n_layers,
+                                          restarter=restarter_type, hist_len=hist_len)
+
+            val_dl = DataLoader(val_data, batch_size=bs, collate_fn=eval_collator)
+            ind_val_dl = DataLoader(inductive_val_data, batch_size=bs, collate_fn=eval_collator)
+            test_dl = DataLoader(test_data, batch_size=bs, collate_fn=eval_collator)
+            ind_test_dl = DataLoader(inductive_test_data, batch_size=bs, collate_fn=eval_collator)
+
+            test_train_dl = DataLoader(train_data, batch_size=bs, collate_fn=train_collator, pin_memory=True,
+                                       num_workers=num_workers)
+            
+            if rank == 0:
+                logger.info(f'[I/O TIME] Init testing data and graphs use {(time.time()-init_data_time):.2f}')
+
             model = init_model(
                 nfeats, efeats, train_graph, full_graph, full_data, device,
                 feature_as_buffer=feature_as_buffer, dim=dim,
@@ -466,7 +475,7 @@ def run(rank, world_size, *, prefix,
                 n_shared_nodes=0
             )
             # ============= Testing ===========
-            model_state_path = get_checkpoint_path(rank, 'updated_buffer')
+            model_state_path = get_checkpoint_path('updated_buffer')
             model_state = torch.load(model_state_path)
             model.load_state_dict(model_state, strict=False)
             torch.save(model.state_dict(), MODEL_SAVE_PATH)  # save to the model save folder
@@ -479,7 +488,6 @@ def run(rank, world_size, *, prefix,
                     uptodate_nodes = warmup(model, test_warmup_dl, device)
                 else:
                     uptodate_nodes = set()
-            
             start_test_time = time.time()
 
             if (testing_mode == "from_begin" or testing_mode == "hybrid") and rank == 0:
@@ -541,7 +549,8 @@ def run(rank, world_size, *, prefix,
                     "epoch_times": train_epoch_times,
                     "train_losses": train_losses,
                     "total_epoch_times": total_epoch_times,
-                    "test_time_from_val": test_time
+                    "test_time_from_val": test_time,
+                    "best_epoch": early_stopper.best_epoch
                 }, open(PICKLE_SAVE_PATH, "wb"))
             else:
                 pickle.dump({
@@ -559,7 +568,6 @@ def run(rank, world_size, *, prefix,
                     "total_epoch_times": total_epoch_times,
                     f"test_time_{testing_mode}": test_time
                 }, open(PICKLE_SAVE_PATH, "wb"))
-            
             if rank == 0 and testing_mode == "hybrid":
                 with open(RESULT_SAVE_PATH, 'r') as f:
                     results = json.load(f)
@@ -583,7 +591,7 @@ def run(rank, world_size, *, prefix,
                     val_auc=best_val_auc, ind_val_auc=best_ind_val_auc,
                     test_ap_from_val=test_ap, test_auc_from_val=test_auc,
                     ind_test_ap_from_val=ind_test_ap, ind_test_auc_from_val=ind_test_auc,
-                    test_time_from_val=test_time
+                    test_time_from_val=test_time, best_epoch=early_stopper.best_epoch
                 )
                 json.dump(results, open(RESULT_SAVE_PATH, 'w'))
             else:
@@ -599,8 +607,6 @@ def run(rank, world_size, *, prefix,
                     test_time=test_time
                 )
                 json.dump(results, open(RESULT_SAVE_PATH, 'w'))
-            
-            # remove all ckpts
             if rank == 0:
                 shutil.rmtree(ckpts_dir)
                 shutil.rmtree(sns_dir)
@@ -636,19 +642,21 @@ def get_args():
     parser.add_argument('--recover_step', type=int, default=0, help='recover step')
     # Data Distribute
     parser.add_argument('--part_exp', type=int, default=0, help='Partition graph into 2^k parts')
-    parser.add_argument('--divide_method', type=str, default='pre', 
+    parser.add_argument('--divide_method', type=str, default='pre',
                         choices=["pre", "buildin_kl", "pre_kl", "random"], help='methods used for dividing')
-    parser.add_argument('--testing_mode', type=str, default='hybrid', 
-                        choices=["from_begin", "from_val", "hybrid"], 
+    parser.add_argument('--testing_mode', type=str, default='hybrid',
+                        choices=["from_begin", "from_val", "hybrid"],
                         help='The memory used in testing, copy from the end of val or rerun the train and val')
     parser.add_argument('--testing_on_cpu', action='store_true', help='testing run on cpu')
     parser.add_argument('--backup_memory_to_cpu', action='store_true', help='backup memory to cpu')
     parser.add_argument('--top_k', type=int, default=0, help='Use top k shared nodes')
     parser.add_argument('--static_shared_nodes', action='store_true', help='shared nodes memory is static')
-    parser.add_argument('--sync_mode', type=str, default='none', 
+    parser.add_argument('--sync_mode', type=str, default='none',
                         choices=["none", "average", "last"], help='methods of sync memories between gpus')
     parser.add_argument('--shuffle_parts', action='store_true', help='when ws != parts, shuffle every epoch or not')
     parser.add_argument('--no_ind_val', action='store_true', help='skip inductive validation process')
+    parser.add_argument('--save_mode', type=str, default='none',
+                    choices=["none", "read"], help='save mode, do not use save in here')
 
     args = parser.parse_args()
     process_args_presets(args)
@@ -667,5 +675,6 @@ if __name__ == '__main__':
     os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
     os.environ['MASTER_ADDR'] = 'localhost'
     os.environ['MASTER_PORT'] = args.port
+    # os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:32"
 
     mp.spawn(worker, nprocs=WORLD_SIZE, args=(WORLD_SIZE, args), join=True, daemon=True)
