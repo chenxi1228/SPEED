@@ -1,9 +1,9 @@
-# VGP-SEP
+# Streaming Edge Partitioning Component (SEP)
 A software package for Streaming Edge Partitioning.
 
 Based on the paper:
 
-"TIG-PDF: Scaling and Accelerating Temporal Interaction Graph Models on Large Graphs" submitted to ICDE'24
+"SPEED: Streaming Partition and Parallel Acceleration for Temporal Interaction Graph Embedding" submitted to ICDE'24
 
 If you use the application please cite the paper.
 
