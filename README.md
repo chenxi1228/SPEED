@@ -4,8 +4,11 @@ Codes for the paper "Streaming Partition and Parallel Acceleration for Temporal 
 # Data
 
 For the datasets Wikipedia, Reddit, MOOC and LastFM, please download data from the [project homepage of JODIE](https://snap.stanford.edu/jodie/) and pre-process them with the script provided by [TGN](https://github.com/twitter-research/tgn).
+
 For ML25m, please download data from the [grouplens](https://grouplens.org/datasets/movielens/25m/) and put the file ratings.csv into the folder [Datasets](Datasets) then, pre-process it with the [ML25m2TGN.py](ML25m2TGN.py).
+
 For DGraphfin, please download data from the [DGraph](https://dgraph.xinye.com/dataset) and put it into the folder [Datasets](Datasets) then, pre-process it with the [DGraphFin2TGN.py](DGraphFin2TGN.py).
+
 For ML25m, please download data from the [Tianchi](https://tianchi.aliyun.com/dataset/649) and put the file into the folder [Datasets](Datasets) then, pre-process it with the [Taobao2TGN.py](Taobao2TGN.py).
 
 # How to use
