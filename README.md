@@ -1,5 +1,5 @@
-# TIG-PDF
-Codes for the paper "TIG-PDF: Scaling and Accelerating Temporal Interaction Graph Models on Large Graphs" submitted to ICDE'24
+# SPEED
+Codes for the paper "Streaming Partition and Parallel Acceleration for Temporal Interaction Graph Embedding" submitted to ICDE'24
 
 # Data
 
@@ -10,7 +10,7 @@ For ML25m, please download data from the [Tianchi](https://tianchi.aliyun.com/da
 
 # How to use
 
-## TIG Streaming Edge Partitioning Module with controllable shared nodes (SEP)
+## Streaming Edge Partitioning Component (SEP)
 ###Usage: Parameters:
 
 graphfile: the name of the file that stores the graph to be partitioned.
@@ -31,7 +31,7 @@ For a more in-depth discussion see the paper ###Example
 
 `java -jar dist/VGP.jar data/sample_graph.txt 4 -algorithm mymethod -lambda 1 -beta 0.1 -threads 1 -output example/output`  
 
-## large-scale Distributed Computing Module (DCM)
+## Parallel Acceleration Component (PAC)
 ### Regular training
 
 
