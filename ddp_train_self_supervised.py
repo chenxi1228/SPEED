@@ -99,24 +99,23 @@ def run(rank, world_size, *, prefix,
         RESULT_SAVE_PATH_from_begin = f"results/from_begin_{prefix}.json"
         PICKLE_SAVE_PATH_from_begin = "results/from_begin_{}.pkl".format(prefix)
 
-    if divide_method == 'pre':
         DIVIDED_NODES_PATHs = []
         for i in range(2**part_exp):
-            DIVIDED_NODES_PATH = f'./divided_nodes/{data}/{data}_{2**part_exp}parts_top{top_k}/output{i}.txt'
+            DIVIDED_NODES_PATH = f'./divided_nodes_seed/{data}/{seed}/{data}_{2**part_exp}parts_top{top_k}/output{i}.txt'
             DIVIDED_NODES_PATHs.append(DIVIDED_NODES_PATH)
         if top_k == 0:
             SHARED_NODES_PATH = None
         else:
-            SHARED_NODES_PATH = f'./divided_nodes/{data}/{data}_{2**part_exp}parts_top{top_k}/outputshared.txt'
+            SHARED_NODES_PATH = f'./divided_nodes_seed/{data}/{seed}/{data}_{2**part_exp}parts_top{top_k}/outputshared.txt'
     elif divide_method == 'pre_kl':
         DIVIDED_NODES_PATHs = []
         for i in range(2**part_exp):
-            DIVIDED_NODES_PATH = f'./divided_nodes/{data}_kl/{data}_{2**part_exp}parts/output{i}.txt'
+            DIVIDED_NODES_PATH = f'./divided_nodes_seed/{data}_kl/{seed}/{data}_{2**part_exp}parts/output{i}.txt'
             DIVIDED_NODES_PATHs.append(DIVIDED_NODES_PATH)
     elif divide_method == 'random':
         DIVIDED_NODES_PATHs = []
         for i in range(2**part_exp):
-            DIVIDED_NODES_PATH = f'./divided_nodes/{data}_random/{data}_{2**part_exp}parts/output{i}.txt'
+            DIVIDED_NODES_PATH = f'./divided_nodes_seed/{data}_random/{seed}/{data}_{2**part_exp}parts/output{i}.txt'
             DIVIDED_NODES_PATHs.append(DIVIDED_NODES_PATH)
 
     # if rank == 0:  # only the first process logs and saves

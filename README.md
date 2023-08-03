@@ -36,7 +36,13 @@ For a more in-depth discussion see the paper ###Example
 
 ## Parallel Acceleration Component (PAC)
 ### Regular training
+Please use the main branch to proceed a regular training. You can also use it to train big datasets, however, by applying the codes in the branch "big_datasets" would save you some time.
 
+```
+python ddp_train_self_supervised.py --gpu 0,1,2,3 --data [DATA] --part_exp [2/4] --[jodie/tgn/tgat/dyrep/tige] --prefix [add_your_prefered_prefix] --top_k [0/1/5/10/-1] --seed [0/1/2...] --sync_mode [last/none/average] --divide_method pre
+```
+
+If you are facing OOM problem, passing the arguments `--backup_memory_to_cpu` and  `--testing_on_cpu` may help you.
 
 ### Training big datasets
 If you would like to train the three big datasets, please use the codes in the branch "big_datasets".
@@ -53,15 +59,8 @@ Then you can reuse the saved graphs by setting `--save_mode read` for training f
 python ddp_train_self_supervised.py --gpu 0,1,2,3 --data [DATA] --part_exp [2/4] --[jodie/tgn/tgat/dyrep/tige] --prefix [add_your_prefered_prefix] --top_k [0/1/5/10/-1] --seed [0/1/2...] --sync_mode [last/none/average] --divide_method pre --backup_memory_to_cpu --testing_on_cpu --no_ind_val --save_mode read
 ```
 
-```
-python train_self_supervised.py --data [DATA] --msg_src [left/right] --upd_src [left/right] --restarter [seq/static] --restart_prob [0/0.001/...]
-```
 If you want to use mooc/lastfm datasets, please pass one more argument: `--dim 100`.
 
-Temporal Link Prediction with multi-GPU
-```
-python train_self_supervised_ddp.py --gpu 0,1,2,3 [...and other arguments]
-```
 
 Node Classification
 ```
@@ -69,28 +68,4 @@ python train_supervised.py --code [CODE]
 ```
 Here, [CODE] is the HASH code of a trained model with `train_self_supervised.py`.
 
-# Baselines 
 
-Use presets:
-
-```
-python train_self_supervised.py --data [DATA] [--tige/--jodie/--tgn/--dyrep/--tgat]
-```
-
-
-# Exps
-
-
-```
-python train_self_supervised.py --data [DATA] [--tige/--jodie/--tgn/--dyrep/--tgat] --top_k [0/1/5/10/-1] --sync_mode [none/average/last]
-```
-
-```
-python train_self_supervised.py --data [DATA] [--tige/--jodie/--tgn/--dyrep/--tgat] --top_k [0/1/5/10/-1] --static_shared_nodes
-```
-
-## baseline_kl
-
-```
-python train_self_supervised.py --data [DATA] [--tige/--jodie/--tgn/--dyrep/--tgat] --top_k 0 --static_shared_nodes --divide_method pre_kl --part_exp 2 --gpu 0,1,2,3
-```
