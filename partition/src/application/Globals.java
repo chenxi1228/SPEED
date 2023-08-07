@@ -18,6 +18,8 @@ public class Globals {
     public int THREADS = Runtime.getRuntime().availableProcessors();
     public String OUTPUT_FILE_NAME;
     public double maxtime;
+
+    public int SEED  = 0;
     
     public Globals(String[] args){
         parse_arguments(args);
@@ -31,6 +33,9 @@ public class Globals {
             for(int i=3; i < args.length; i+=2){
                 if(args[i].equalsIgnoreCase("-lambda")){
                     LAMBDA = Double.parseDouble(args[i+1]);
+                }
+                else if(args[i].equalsIgnoreCase("-seed")){
+                    SEED = Double.parseDouble(args[i+1]);
                 }
                 else if(args[i].equalsIgnoreCase("-beta")){
                     BETA = Double.parseDouble(args[i+1]);
@@ -98,6 +103,7 @@ public class Globals {
         else System.out.println("");
         System.out.print("\tdegree_compute: "+DEGREE_COMPUTE);
         System.out.println("\tbeta: "+BETA);
+        System.out.println("\tseed: "+SEED);
         System.out.println("\tthreads: "+THREADS);
         if (OUTPUT_FILE_NAME!=null){ System.out.println("\toutput: "+OUTPUT_FILE_NAME); }
     }

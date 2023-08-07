@@ -29,6 +29,7 @@ public class MyMethod implements PartitionStrategy {
         int epsilon = 1;
         int u = e.getU();
         int v = e.getV();
+        int seed = GLOBALS.SEED
         double ts = e.getTs();
 
         Record u_record = state.getRecord(u);
@@ -201,7 +202,7 @@ public class MyMethod implements PartitionStrategy {
             state.incrementDropNum();
         } else {
             //*** PICK A RANDOM ELEMENT FROM CANDIDATES
-            Random r = new Random(1);
+            Random r = new Random(seed);
             int choice = r.nextInt(candidates.size());
             machine_id = candidates.get(choice);
 

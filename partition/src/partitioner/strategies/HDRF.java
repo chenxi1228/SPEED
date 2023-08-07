@@ -30,7 +30,7 @@ public class HDRF implements PartitionStrategy{
         int u = e.getU();
         int v = e.getV();
         double ts = e.getTs();
-        
+        int seed = GLOBALS.SEED
         Record u_record = state.getRecord(u);
         Record v_record = state.getRecord(v);
         
@@ -118,7 +118,7 @@ public class HDRF implements PartitionStrategy{
         }
         
         //*** PICK A RANDOM ELEMENT FROM CANDIDATES
-        Random r = new Random(2);
+        Random r = new Random(seed);
         int choice = r.nextInt(candidates.size());
         machine_id = candidates.get(choice);
         
