@@ -58,6 +58,18 @@ java -jar dist/partition.jar [DATA] [2/4/8...] -degree_compute [normal/decay] -a
 ```
 
 ## Parallel Acceleration Component (PAC)
+
+Some parameters need to be transfered from SEP:
+
+|       SEP       |     PAC    |
+|:---------------:|:----------:|
+|       topk      |  top_k/10  |
+|      nparts     | 2^part_exp |
+|:---------------:|:----------:|
+|     took*10     |    top_k   |
+| $\sqrt{nparts}$ |  part_exp  |
+
+
 ### Regular training
 Please use the main branch to proceed a regular training. You can also use it to train big datasets, however, by applying the codes in the branch "big_datasets" would save you some time.
 
@@ -72,6 +84,9 @@ If you would like to train the three big datasets, please use the codes in the b
 In this branch, the whole training process is being accelerated by optimising the I/O process and omitting unnecessary inductive validation and only using `testing_from_begin` setting.
 
 You should (optionally) first save the graphs and sub-graphs by running `save_graphs.py` for different (parameters): `--data`, `--part_exp`, `--gpu`, `--divide_method`, `--top_k` and `--seed` (the saved graphs will be the same if these parameters are the same), you may also would like to set a different `--prefix`:
+
+If you would like to use this step, please make sure your number of GPUs equals to 2^part_exp.
+
 ```
 python save_graphs.py --gpu 0,1,2,3 --data [DATA] --part_exp [1/2/3...] --prefix [add_your_prefered_prefix] --top_k [0/1/5/10/-1] --seed [0/1/2...] --divide_method pre --save_mode save
 ```
