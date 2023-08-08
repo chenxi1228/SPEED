@@ -63,9 +63,9 @@ Some parameters need to be transfered from SEP:
 
 |       SEP       |     PAC    |
 |:---------------:|:----------:|
-|       topk      |  top_k/10  |
+|       topk      |  top_k/100 |
 |      nparts     | 2^part_exp |
-|     took*10     |    top_k   |
+|     topk*100    |    top_k   |
 | $\sqrt{nparts}$ |  part_exp  |
 
 
