@@ -65,7 +65,6 @@ Some parameters need to be transfered from SEP:
 |:---------------:|:----------:|
 |       topk      |  top_k/10  |
 |      nparts     | 2^part_exp |
-|:---------------:|:----------:|
 |     took*10     |    top_k   |
 | $\sqrt{nparts}$ |  part_exp  |
 
