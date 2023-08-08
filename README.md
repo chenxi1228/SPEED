@@ -14,7 +14,20 @@ For ML25m, please download data from the [Tianchi](https://tianchi.aliyun.com/da
 # How to use
 
 ## Streaming Edge Partitioning Component (SEP)
-###Usage: Parameters:
+
+### Pre-processing for partition
+
+If you would like to using our SEP, please first do one more pre-processing step, which transform the csv data file to txt format.
+
+```
+python partition/transform.py --data [DATA]
+```
+
+We also provide the processed files for datasets Wikipedia, Reddit, MOOC and LastFM in this repo, so for these four datasets, you could directly conduct the SEP.
+
+Then move forward to the partition folder (by `cd partition`).
+
+### Usage: Parameters:
 
 `graphfile`: the name of the file that stores the graph to be partitioned.
 
@@ -37,9 +50,12 @@ Options:
 
 `-output string` -> specifies the prefix for the name of the files where the output will be stored (files: prefix.info, prefix.edges and prefix.vertices).
 
-For a more in-depth discussion see the paper ###Example
 
-`java -jar dist/partition.jar [DATA] [2/4/8...] -degree_compute [normal/decay] -algorithm [mymethod/hdrf/hashing] -lambda [1/2...] -beta [0.1/0.2...]  -seed [0/1/2/...] -threads [1/2/4...] -output output`  
+You can run the partition for temporal interaction graphs by:
+
+```
+java -jar dist/partition.jar [DATA] [2/4/8...] -degree_compute [normal/decay] -algorithm [mymethod/hdrf/hashing] -lambda [1/2...] -beta [0.1/0.2...]  -seed [0/1/2/...] -threads [1/2/4...] -output output
+```
 
 ## Parallel Acceleration Component (PAC)
 ### Regular training
