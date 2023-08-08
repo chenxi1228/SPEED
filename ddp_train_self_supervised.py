@@ -636,7 +636,8 @@ def get_args():
     # Data Distribute
     parser.add_argument('--part_exp', type=int, default=0, help='Partition graph into 2^k parts')
     parser.add_argument('--divide_method', type=str, default='pre', 
-                        choices=["pre", "buildin_kl", "pre_kl", "random"], help='methods used for dividing')
+                        choices=["pre", "buildin_kl", "pre_kl", "random"], help='methods used for dividing, '
+                                                                                'do not use the buildin_kl')
     parser.add_argument('--testing_mode', type=str, default='hybrid', 
                         choices=["from_begin", "from_val", "hybrid"], 
                         help='The memory used in testing, copy from the end of val or rerun the train and val')

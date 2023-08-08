@@ -1,7 +1,7 @@
 MODEL_VERSION = "v1.0.0"
 CHANGELOG = """
 v1.0.0:
-    1. TIG-PDF
+    1. SPEED
 """
 
 
