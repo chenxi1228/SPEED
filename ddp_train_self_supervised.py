@@ -100,22 +100,22 @@ def run(rank, world_size, *, prefix,
     if divide_method == 'pre':
         DIVIDED_NODES_PATHs = []
         for i in range(2**part_exp):
-            DIVIDED_NODES_PATH = f'./divided_nodes_seed/{data}/{seed}/{data}_{2**part_exp}parts_top{top_k}/output{i}.txt'
+            DIVIDED_NODES_PATH = f'./partition/divided_nodes_seed/{data}/{seed}/{data}_{2**part_exp}parts_top{top_k}/output{i}.txt'
             DIVIDED_NODES_PATHs.append(DIVIDED_NODES_PATH)
         if top_k == 0:
             # SHARED_NODES_PATH = f'./divided_nodes/{data}/{data}_{2**part_exp}parts/outputshared.txt'
             SHARED_NODES_PATH = None
         else:
-            SHARED_NODES_PATH = f'./divided_nodes_seed/{data}/{seed}/{data}_{2**part_exp}parts_top{top_k}/outputshared.txt'
+            SHARED_NODES_PATH = f'./partition/divided_nodes_seed/{data}/{seed}/{data}_{2**part_exp}parts_top{top_k}/outputshared.txt'
     elif divide_method == 'pre_kl':
         DIVIDED_NODES_PATHs = []
         for i in range(2**part_exp):
-            DIVIDED_NODES_PATH = f'./divided_nodes_seed/{data}_kl/{seed}/{data}_{2**part_exp}parts/output{i}.txt'
+            DIVIDED_NODES_PATH = f'./partition/divided_nodes_seed/{data}_kl/{seed}/{data}_{2**part_exp}parts/output{i}.txt'
             DIVIDED_NODES_PATHs.append(DIVIDED_NODES_PATH)
     elif divide_method == 'random':
         DIVIDED_NODES_PATHs = []
         for i in range(2**part_exp):
-            DIVIDED_NODES_PATH = f'./divided_nodes_seed/{data}_random/{seed}/{data}_{2**part_exp}parts/output{i}.txt'
+            DIVIDED_NODES_PATH = f'./partition/divided_nodes_seed/{data}_random/{seed}/{data}_{2**part_exp}parts/output{i}.txt'
             DIVIDED_NODES_PATHs.append(DIVIDED_NODES_PATH)
 
     # if rank == 0:  # only the first process logs and saves
@@ -643,7 +643,8 @@ def get_args():
     # Data Distribute
     parser.add_argument('--part_exp', type=int, default=0, help='Partition graph into 2^k parts')
     parser.add_argument('--divide_method', type=str, default='pre',
-                        choices=["pre", "buildin_kl", "pre_kl", "random"], help='methods used for dividing')
+                        choices=["pre", "buildin_kl", "pre_kl", "random"], help='methods used for dividing, '
+                                                                                'do not use the buildin_kl')
     parser.add_argument('--testing_mode', type=str, default='hybrid',
                         choices=["from_begin", "from_val", "hybrid"],
                         help='The memory used in testing, copy from the end of val or rerun the train and val')
