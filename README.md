@@ -5,6 +5,9 @@ If you would like to use the codes in this branch, please download the main bran
 In this branch, the whole training process is being accelerated by optimising the I/O process and omitting unnecessary inductive validation and only using `testing_from_begin` setting.
 
 You should (optionally) first save the graphs and sub-graphs by running `save_graphs.py` for different (parameters): `--data`, `--part_exp`, `--gpu`, `--divide_method`, `--top_k` and `--seed` (the saved graphs will be the same if these parameters are the same), you may also would like to set a different `--prefix`:
+
+If you would like to use this step, please make sure your number of GPUs equals to 2^part_exp.
+
 ```
 python save_graphs.py --gpu 0,1,2,3 --data [DATA] --part_exp [1/2/3...] --prefix [add_your_prefered_prefix] --top_k [0/1/5/10/-1] --seed [0/1/2...] --divide_method pre --save_mode save
 ```
