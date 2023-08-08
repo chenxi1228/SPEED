@@ -1,8 +1,0 @@
-graphfile: data/wikipedia_new.txt
-parts: 8
-algorithm: mymethod
-
-Replication factor: 1.2506
-Load relative standard deviation: 0.0116
-Max partition size (edge cardinality): 10330
-Max partition size (vertex cardinality): 1763
