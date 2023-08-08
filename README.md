@@ -54,7 +54,7 @@ Options:
 You can run the partition for temporal interaction graphs by:
 
 ```
-java -jar dist/partition.jar [DATA] [2/4/8...] -degree_compute [normal/decay] -algorithm [mymethod/hdrf/hashing] -lambda [1/2...] -beta [0.1/0.2...]  -seed [0/1/2/...] -threads [1/2/4...] -output output
+java -jar dist/partition.jar [DATA] [2/4/8...] [0.01/0.05/0.10...] -degree_compute [normal/decay] -algorithm [mymethod/hdrf/hashing] -lambda [1/2...] -beta [0.1/0.2...]  -seed [0/1/2/...] -threads [1/2/4...] -output output
 ```
 
 ## Parallel Acceleration Component (PAC)
