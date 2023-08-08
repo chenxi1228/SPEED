@@ -17,13 +17,15 @@ For ML25m, please download data from the [Tianchi](https://tianchi.aliyun.com/da
 ###Usage: Parameters:
 
 graphfile: the name of the file that stores the graph to be partitioned.
+
 nparts: the number of parts that the graph will be partitioned into. Maximum value 256.
+
 topk: topk nodes are selected as hubs.
 
 Options:
 `-degree_compute string` -> options to compute nodes' centrality (normal decay)
 
-`-algorithm string` -> specifies the algorithm to be used (hdrf greedy hashing grid pds dbh). Default mymethod.
+`-algorithm string` -> specifies the algorithm to be used (hdrf hashing mymethod). Default mymethod.
 
 `-lambda double` -> specifies the lambda parameter for hdrf and mymethod. Default 1.
 
@@ -37,7 +39,7 @@ Options:
 
 For a more in-depth discussion see the paper ###Example
 
-`java -jar dist/partition.jar [DATA] [2/4/8...] -degree_compute [normal/decay] -algorithm [mymethod/hdrf/hash] -lambda [1/2...] -beta [0.1/0.2...]  -seed [0/1/2/...] -threads [1/2/4...] -output output`  
+`java -jar dist/partition.jar [DATA] [2/4/8...] -degree_compute [normal/decay] -algorithm [mymethod/hdrf/hashing] -lambda [1/2...] -beta [0.1/0.2...]  -seed [0/1/2/...] -threads [1/2/4...] -output output`  
 
 ## Parallel Acceleration Component (PAC)
 ### Regular training
