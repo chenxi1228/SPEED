@@ -69,7 +69,7 @@ If you are facing OOM problem, passing the arguments `--backup_memory_to_cpu` an
 
 ### Training big datasets
 If you would like to train the three big datasets, please use the codes in the branch "big_datasets".
-In this branch accelerate the whole training process by optimising the I/O process and omitting unnecessary inductive validation and only using `testing_from_begin` setting.
+In this branch, the whole training process is being accelerated by optimising the I/O process and omitting unnecessary inductive validation and only using `testing_from_begin` setting.
 
 You should (optionally) first save the graphs and sub-graphs by running `save_graphs.py` for different (parameters): `--data`, `--part_exp`, `--gpu`, `--divide_method`, `--top_k` and `--seed` (the saved graphs will be the same if these parameters are the same), you may also would like to set a different `--prefix`:
 ```
