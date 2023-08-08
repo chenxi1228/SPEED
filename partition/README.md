@@ -11,9 +11,11 @@ If you use the application please cite the paper.
 Parameters:
 - `graphfile`: the name of the file that stores the graph to be partitioned.
 - `nparts`: the number of parts that the graph will be partitioned into. Maximum value 256.
+- `topk`: topk nodes are selected as hubs
 
 Options:
-- `-algorithm string`  ->  specifies the algorithm to be used (hdrf greedy hashing grid pds dbh). Default mymethod.
+- `-degree_compute string`  -> option to compute nodes' degree (normal decay)
+- `-algorithm string`  ->  specifies the algorithm to be used (hdrf hashing mymethod). Default mymethod.
 - `-lambda double`  ->  specifies the lambda parameter for hdrf and mymethod. Default 1.
 - `-beta double` ->  specifies the beta parameter for hdrf. Default 0.1.
 - `-seed int` ->  seed for repeated experiment. Default 0.
@@ -25,5 +27,5 @@ For a more in-depth discussion see the paper
 ###Example
 
 ```
-java -jar dist/VGP.jar data/sample_graph.txt 4 -algorithm mymethod -lambda 1 -beta 0.1 -seed 1 -threads 1 -output output  
+java -jar dist/patition.jar wikipedia 4 0.1 -degree_compute normal -algorithm mymethod -lambda 1 -beta 0.1 -seed 1 -threads 1 -output output  
 ```
