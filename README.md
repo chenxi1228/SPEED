@@ -16,11 +16,11 @@ For ML25m, please download data from the [Tianchi](https://tianchi.aliyun.com/da
 ## Streaming Edge Partitioning Component (SEP)
 ###Usage: Parameters:
 
-graphfile: the name of the file that stores the graph to be partitioned.
+`graphfile`: the name of the file that stores the graph to be partitioned.
 
-nparts: the number of parts that the graph will be partitioned into. Maximum value 256.
+`nparts`: the number of parts that the graph will be partitioned into. Maximum value 256.
 
-topk: topk nodes are selected as hubs.
+`topk`: topk nodes are selected as hubs.
 
 Options:
 `-degree_compute string` -> options to compute nodes' centrality (normal decay)
