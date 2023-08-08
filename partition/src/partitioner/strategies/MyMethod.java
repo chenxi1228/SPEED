@@ -29,7 +29,7 @@ public class MyMethod implements PartitionStrategy {
         int epsilon = 1;
         int u = e.getU();
         int v = e.getV();
-        int seed = GLOBALS.SEED
+        int seed = GLOBALS.SEED;
         double ts = e.getTs();
 
         Record u_record = state.getRecord(u);

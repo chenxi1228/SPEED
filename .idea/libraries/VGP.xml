@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="VGP">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/partition/dist/VGP.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

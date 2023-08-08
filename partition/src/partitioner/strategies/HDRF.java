@@ -30,7 +30,7 @@ public class HDRF implements PartitionStrategy{
         int u = e.getU();
         int v = e.getV();
         double ts = e.getTs();
-        int seed = GLOBALS.SEED
+        int seed = GLOBALS.SEED;
         Record u_record = state.getRecord(u);
         Record v_record = state.getRecord(v);
         

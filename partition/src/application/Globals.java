@@ -15,6 +15,7 @@ public class Globals {
     public String DEGREE_COMPUTE = "normal";  // "normal", "decay"
     public double LAMBDA = 1;
     public double BETA = 0.1;
+    public String DATASET;
     public int THREADS = Runtime.getRuntime().availableProcessors();
     public String OUTPUT_FILE_NAME;
     public double maxtime;
@@ -27,7 +28,8 @@ public class Globals {
     
     private void parse_arguments(String[] args){
         try{
-            INPUT_FILE_NAME = args[0];
+            DATASET = args[0];
+            INPUT_FILE_NAME = "data/" + args[0] + ".txt";
             P = Integer.parseInt(args[1]);
             K = Double.parseDouble(args[2]);
             for(int i=3; i < args.length; i+=2){
@@ -35,7 +37,7 @@ public class Globals {
                     LAMBDA = Double.parseDouble(args[i+1]);
                 }
                 else if(args[i].equalsIgnoreCase("-seed")){
-                    SEED = Double.parseDouble(args[i+1]);
+                    SEED = Integer.parseInt(args[i+1]);
                 }
                 else if(args[i].equalsIgnoreCase("-beta")){
                     BETA = Double.parseDouble(args[i+1]);

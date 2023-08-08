@@ -34,9 +34,9 @@ public class CoordinatedPartitionState implements PartitionState{
         }        
         MAX_LOAD = 0;
         DROP = 0;
-        if (GLOBALS.OUTPUT_FILE_NAME!=null){
-            out = new DatWriter(GLOBALS.OUTPUT_FILE_NAME+".edges");
-        }
+        //if (GLOBALS.OUTPUT_FILE_NAME!=null){
+       //     out = new DatWriter(GLOBALS.OUTPUT_FILE_NAME+".edges");
+        //}
     }
     
     public synchronized void incrementMachineLoadVertices(int m) {
@@ -90,9 +90,9 @@ public class CoordinatedPartitionState implements PartitionState{
         if (new_value>MAX_LOAD){
             MAX_LOAD = new_value;
         }
-        if (GLOBALS.OUTPUT_FILE_NAME!=null){
-            out.write(e+": "+m+"\n");
-        }
+       // if (GLOBALS.OUTPUT_FILE_NAME!=null){
+        //    out.write(e+": "+m+"\n");
+        //}
     }
 
     @Override
@@ -137,7 +137,7 @@ public class CoordinatedPartitionState implements PartitionState{
 
     @Override
     public SortedSet<Integer> getVertexIds() {
-        if (GLOBALS.OUTPUT_FILE_NAME!=null){ out.close(); }        
+        //if (GLOBALS.OUTPUT_FILE_NAME!=null){ out.close(); }
         return new TreeSet<Integer>(record_map.keySet());
     }
     

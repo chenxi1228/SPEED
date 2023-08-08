@@ -20,9 +20,11 @@ public class DatWriter {
         try{
             File file = new File(FILE_NAME);
             // if file doesnt exists, then create it
-            if (!file.exists()) {
-                file.createNewFile();
+            File parent = new File(file.getParent());
+            if (!parent.exists()) {
+                parent.mkdirs();
             }
+            file.createNewFile();
             FileWriter fw = new FileWriter(file.getAbsoluteFile());
             bw = new BufferedWriter(fw);
         }catch(Exception e){

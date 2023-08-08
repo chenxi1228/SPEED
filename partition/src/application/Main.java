@@ -74,8 +74,8 @@ public class Main {
         System.out.println("\n");     
         //WRITE OUTPUT ON FILE
         if (GLOBALS.OUTPUT_FILE_NAME!=null){
-            Output.writeInfo(GLOBALS, RF, std_dev, MAX_LOAD_EDGES, MAX_LOAD_VERTICES);
-            Output.writeVertexReplicas(GLOBALS, state);
+            //Output.writeInfo(GLOBALS, RF, std_dev, MAX_LOAD_EDGES, MAX_LOAD_VERTICES);
+            //Output.writeVertexReplicas(GLOBALS, state);
             if(GLOBALS.PARTITION_STRATEGY.equalsIgnoreCase("hashing")){
                 Output.writeVertexListHasing(GLOBALS, state, load_vertices);
             }
