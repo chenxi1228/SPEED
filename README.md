@@ -15,4 +15,4 @@ Then you can reuse the saved graphs by setting `--save_mode read` for training f
 python ddp_train_self_supervised.py --gpu 0,1,2,3 --data [DATA] --part_exp [1/2/3...] --[jodie/tgn/tgat/dyrep/tige] --prefix [add_your_prefered_prefix] --top_k [0/1/5/10/-1] --seed [0/1/2...] --sync_mode [last/none/average] --divide_method pre --backup_memory_to_cpu --testing_on_cpu --no_ind_val --dim 100 --save_mode read
 ```
 
-Note that this branch only fit for the situation, that your number of GPUs equals to 2^part_exp, for now.
+Note that this branch only support for the situation, that your number of GPUs equals to 2^part_exp, for now.
