@@ -56,9 +56,23 @@ public class Output {
         List<Integer> shared_nodes = new ArrayList<>();
         //List<DatWriter> output_files = new ArrayList<DatWriter>();
         DatWriter [] output_files = new DatWriter[GLOBALS.P];
-        DatWriter output_shared_nodes = new DatWriter("divided_nodes_seed/"+ GLOBALS.DATASET + "/" + GLOBALS.SEED + "/" + GLOBALS.DATASET + "_" + GLOBALS.P + "parts_top" + (int)(GLOBALS.K*100) + "/" + GLOBALS.OUTPUT_FILE_NAME + "shared" + ".txt");
-        for (int i = 0; i < GLOBALS.P; i++) {
-             output_files[i]= new DatWriter("divided_nodes_seed/"+ GLOBALS.DATASET + "/" + GLOBALS.SEED + "/" + GLOBALS.DATASET + "_" + GLOBALS.P + "parts_top" + (int)(GLOBALS.K*100) + "/" + GLOBALS.OUTPUT_FILE_NAME  + String.valueOf(i) + ".txt");
+        if (GLOBALS.PARTITION_STRATEGY.equalsIgnoreCase("hdrf")){
+            DatWriter output_shared_nodes = new DatWriter("divided_nodes_seed_hdrf/"+ GLOBALS.DATASET + "/" + GLOBALS.SEED + "/" + GLOBALS.DATASET + "_" + GLOBALS.P + "parts" + "/" + GLOBALS.OUTPUT_FILE_NAME + "shared" + ".txt");
+            for (int i = 0; i < GLOBALS.P; i++) {
+                output_files[i]= new DatWriter("divided_nodes_seed_hdrf/"+ GLOBALS.DATASET + "/" + GLOBALS.SEED + "/" + GLOBALS.DATASET + "_" + GLOBALS.P + "parts" + "/" + GLOBALS.OUTPUT_FILE_NAME  + String.valueOf(i) + ".txt");
+            }
+        }
+        if (GLOBALS.PARTITION_STRATEGY.equalsIgnoreCase("hashing")){
+            DatWriter output_shared_nodes = new DatWriter("divided_nodes_seed_hashing/"+ GLOBALS.DATASET + "/" + GLOBALS.SEED + "/" + GLOBALS.DATASET + "_" + GLOBALS.P + "parts" + "/" + GLOBALS.OUTPUT_FILE_NAME + "shared" + ".txt");
+            for (int i = 0; i < GLOBALS.P; i++) {
+                output_files[i]= new DatWriter("divided_nodes_seed_hashing/"+ GLOBALS.DATASET + "/" + GLOBALS.SEED + "/" + GLOBALS.DATASET + "_" + GLOBALS.P + "parts" + "/" + GLOBALS.OUTPUT_FILE_NAME  + String.valueOf(i) + ".txt");
+            }
+        }
+        else{
+            DatWriter output_shared_nodes = new DatWriter("divided_nodes_seed/"+ GLOBALS.DATASET + "/" + GLOBALS.SEED + "/" + GLOBALS.DATASET + "_" + GLOBALS.P + "parts_top" + (int)(GLOBALS.K*100) + "/" + GLOBALS.OUTPUT_FILE_NAME + "shared" + ".txt");
+            for (int i = 0; i < GLOBALS.P; i++) {
+                output_files[i]= new DatWriter("divided_nodes_seed/"+ GLOBALS.DATASET + "/" + GLOBALS.SEED + "/" + GLOBALS.DATASET + "_" + GLOBALS.P + "parts_top" + (int)(GLOBALS.K*100) + "/" + GLOBALS.OUTPUT_FILE_NAME  + String.valueOf(i) + ".txt");
+            }
         }
         for (int x : vertex_ids){
             Record record = state.getRecord(x);

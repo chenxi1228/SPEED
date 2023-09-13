@@ -197,9 +197,12 @@ public class MyMethod implements PartitionStrategy {
             }
         }
 
+
+        output_file = new DatWriter(GLOBALS.OUTPUT_FILE_NAME + "dropped_edge_info.txt")
         // drop the edge
         if (candidates.isEmpty()) {
             state.incrementDropNum();
+            output_file.write(u + " " + v + " " + ts + " " + u_record.getPartitions() + " " + v_record.getPartitions() + "\n")
         } else {
             //*** PICK A RANDOM ELEMENT FROM CANDIDATES
             Random r = new Random(seed);
