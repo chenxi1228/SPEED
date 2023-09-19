@@ -1,9 +1,0 @@
-<component name="ArtifactManager">
-  <artifact type="jar" name="partition:jar">
-    <output-path>$PROJECT_DIR$/dist</output-path>
-    <root id="archive" name="partition.jar">
-      <element id="module-output" name="partition" />
-      <element id="dir-copy" path="$PROJECT_DIR$/dist" />
-    </root>
-  </artifact>
-</component>
