@@ -37,11 +37,11 @@ public class CoordinatedPartitionState implements PartitionState{
         MAX_LOAD = 0;
         DROP = 0;
 
-        dropped_info = new DatWriter("dropped_edges/" + "dropped_edge_info.txt");
+        dropped_info = new DatWriter("divided_nodes_seed/" + GLOBALS.DATASET + "/" + GLOBALS.SEED + "/" + GLOBALS.DATASET + "_" + GLOBALS.P + "parts_top" + (int) (GLOBALS.K * 100) + "/" + "dropped_edge_info.txt");
         //output_files = new DatWriter[GLOBALS.P];
-       // for (int i = 0; i < GLOBALS.P; i++) {
+        //for (int i = 0; i < GLOBALS.P; i++) {
         //    output_files[i] = new DatWriter("dropped_edges/" + "outbound" + String.valueOf(i) + ".txt");
-       // }
+        //}
         //if (GLOBALS.OUTPUT_FILE_NAME!=null){
        //     out = new DatWriter(GLOBALS.OUTPUT_FILE_NAME+".edges");
         //}
