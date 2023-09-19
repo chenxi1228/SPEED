@@ -50,37 +50,39 @@ public class Output {
         out.close();
     }
 
-    public static void writeVertexList(Globals GLOBALS, PartitionState state, int [] vertex_Loads){
+    public static void writeVertexList(Globals GLOBALS, PartitionState state, int [] vertex_Loads) {
         SortedSet<Integer> vertex_ids = state.getVertexIds();
         //int [] vertex_Loads = state.getMachines_loadVertices();
         List<Integer> shared_nodes = new ArrayList<>();
         //List<DatWriter> output_files = new ArrayList<DatWriter>();
-        DatWriter [] output_files = new DatWriter[GLOBALS.P];
-        if (GLOBALS.PARTITION_STRATEGY.equalsIgnoreCase("hdrf")){
-            DatWriter output_shared_nodes = new DatWriter("divided_nodes_seed_hdrf/"+ GLOBALS.DATASET + "/" + GLOBALS.SEED + "/" + GLOBALS.DATASET + "_" + GLOBALS.P + "parts" + "/" + GLOBALS.OUTPUT_FILE_NAME + "shared" + ".txt");
+        DatWriter[] output_files = new DatWriter[GLOBALS.P];
+        DatWriter output_shared_nodes = null;
+        //DatWriter dropped_info = new DatWriter("dropped_edges/" + "dropped_edge_info.txt");
+        if (GLOBALS.PARTITION_STRATEGY.equalsIgnoreCase("hdrf")) {
+            output_shared_nodes = new DatWriter("divided_nodes_seed_hdrf/" + GLOBALS.DATASET + "/" + GLOBALS.SEED + "/" + GLOBALS.DATASET + "_" + GLOBALS.P + "parts" + "/" + GLOBALS.OUTPUT_FILE_NAME + "shared" + ".txt");
             for (int i = 0; i < GLOBALS.P; i++) {
-                output_files[i]= new DatWriter("divided_nodes_seed_hdrf/"+ GLOBALS.DATASET + "/" + GLOBALS.SEED + "/" + GLOBALS.DATASET + "_" + GLOBALS.P + "parts" + "/" + GLOBALS.OUTPUT_FILE_NAME  + String.valueOf(i) + ".txt");
+                output_files[i] = new DatWriter("divided_nodes_seed_hdrf/" + GLOBALS.DATASET + "/" + GLOBALS.SEED + "/" + GLOBALS.DATASET + "_" + GLOBALS.P + "parts" + "/" + GLOBALS.OUTPUT_FILE_NAME + String.valueOf(i) + ".txt");
             }
         }
-        if (GLOBALS.PARTITION_STRATEGY.equalsIgnoreCase("hashing")){
-            DatWriter output_shared_nodes = new DatWriter("divided_nodes_seed_hashing/"+ GLOBALS.DATASET + "/" + GLOBALS.SEED + "/" + GLOBALS.DATASET + "_" + GLOBALS.P + "parts" + "/" + GLOBALS.OUTPUT_FILE_NAME + "shared" + ".txt");
+        else if (GLOBALS.PARTITION_STRATEGY.equalsIgnoreCase("hashing")) {
+            output_shared_nodes = new DatWriter("divided_nodes_seed_hashing/" + GLOBALS.DATASET + "/" + GLOBALS.SEED + "/" + GLOBALS.DATASET + "_" + GLOBALS.P + "parts" + "/" + GLOBALS.OUTPUT_FILE_NAME + "shared" + ".txt");
             for (int i = 0; i < GLOBALS.P; i++) {
-                output_files[i]= new DatWriter("divided_nodes_seed_hashing/"+ GLOBALS.DATASET + "/" + GLOBALS.SEED + "/" + GLOBALS.DATASET + "_" + GLOBALS.P + "parts" + "/" + GLOBALS.OUTPUT_FILE_NAME  + String.valueOf(i) + ".txt");
+                output_files[i] = new DatWriter("divided_nodes_seed_hashing/" + GLOBALS.DATASET + "/" + GLOBALS.SEED + "/" + GLOBALS.DATASET + "_" + GLOBALS.P + "parts" + "/" + GLOBALS.OUTPUT_FILE_NAME + String.valueOf(i) + ".txt");
             }
         }
-        else{
-            DatWriter output_shared_nodes = new DatWriter("divided_nodes_seed/"+ GLOBALS.DATASET + "/" + GLOBALS.SEED + "/" + GLOBALS.DATASET + "_" + GLOBALS.P + "parts_top" + (int)(GLOBALS.K*100) + "/" + GLOBALS.OUTPUT_FILE_NAME + "shared" + ".txt");
+        else {
+            output_shared_nodes = new DatWriter("divided_nodes_seed/" + GLOBALS.DATASET + "/" + GLOBALS.SEED + "/" + GLOBALS.DATASET + "_" + GLOBALS.P + "parts_top" + (int) (GLOBALS.K * 100) + "/" + GLOBALS.OUTPUT_FILE_NAME + "shared" + ".txt");
             for (int i = 0; i < GLOBALS.P; i++) {
-                output_files[i]= new DatWriter("divided_nodes_seed/"+ GLOBALS.DATASET + "/" + GLOBALS.SEED + "/" + GLOBALS.DATASET + "_" + GLOBALS.P + "parts_top" + (int)(GLOBALS.K*100) + "/" + GLOBALS.OUTPUT_FILE_NAME  + String.valueOf(i) + ".txt");
+                output_files[i] = new DatWriter("divided_nodes_seed/" + GLOBALS.DATASET + "/" + GLOBALS.SEED + "/" + GLOBALS.DATASET + "_" + GLOBALS.P + "parts_top" + (int) (GLOBALS.K * 100) + "/" + GLOBALS.OUTPUT_FILE_NAME + String.valueOf(i) + ".txt");
             }
         }
-        for (int x : vertex_ids){
+        for (int x : vertex_ids) {
             Record record = state.getRecord(x);
-            Iterator<Byte> partitions =  record.getPartitions();
+            Iterator<Byte> partitions = record.getPartitions();
             int[] parts = new int[GLOBALS.P];
             int num_parts = 0;
-            while (partitions.hasNext()){
-                int y = (( partitions.next()  & 0xFF ));
+            while (partitions.hasNext()) {
+                int y = ((partitions.next() & 0xFF));
                 parts[num_parts] = y;
                 num_parts++;
             }
@@ -90,27 +92,26 @@ public class Output {
             //        output_files[j].write(x + "\n");
             //    }
             //}
-            if (num_parts == 1){
+            if (num_parts == 1) {
                 output_files[parts[0]].write(x + "\n");
-            }
-            else{
-                int min_parts = findMinParts(parts,vertex_Loads,num_parts);
+            } else {
+                int min_parts = findMinParts(parts, vertex_Loads, num_parts);
                 //System.out.println(vertex_Loads[0]+"\n");
                 output_files[min_parts].write(x + "\n");
-                for (int j=0; j<num_parts; j++){
-                    if(parts[j] != min_parts){
+                for (int j = 0; j < num_parts; j++) {
+                    if (parts[j] != min_parts) {
                         vertex_Loads[parts[j]]--;
                     }
                 }
             }
+            for (int node : shared_nodes) {
+                output_shared_nodes.write(node + "\n");
+            }
+            for (int i = 0; i < GLOBALS.P; i++) {
+                output_files[i].close();
+            }
+            output_shared_nodes.close();
         }
-        for (int node : shared_nodes){
-            output_shared_nodes.write(node + "\n");
-        }
-        for (int i = 0; i < GLOBALS.P; i++) {
-            output_files[i].close();
-        }
-        output_shared_nodes.close();
     }
 
     public static void writeVertexListNew(Globals GLOBALS, PartitionState state, int [] vertex_Loads){
@@ -119,12 +120,27 @@ public class Output {
         List<Integer> shared_nodes = new ArrayList<>();
         //List<DatWriter> output_files = new ArrayList<DatWriter>();
         DatWriter [] output_files = new DatWriter[GLOBALS.P];
-        DatWriter output_shared_nodes = new DatWriter("divided_nodes_seed/"+ GLOBALS.DATASET + "/" + GLOBALS.SEED + "/" + GLOBALS.DATASET + "_" + GLOBALS.P + "parts_top" + (int)(GLOBALS.K*100) + "/" + GLOBALS.OUTPUT_FILE_NAME  + "shared" + ".txt");
-        for (int i = 0; i < GLOBALS.P; i++) {
-            output_files[i]= new DatWriter("divided_nodes_seed/"+ GLOBALS.DATASET + "/" + GLOBALS.SEED + "/" + GLOBALS.DATASET + "_" + GLOBALS.P + "parts_top" + (int)(GLOBALS.K*100) + "/" + GLOBALS.OUTPUT_FILE_NAME  + String.valueOf(i) + ".txt");
-            //edges in each partition
-            System.out.println("\n Edges number in partition:"+i+":"+(state.getMachineLoad(i)+state.getBigEdgeNum()));
+        DatWriter output_shared_nodes = null;
+        if (GLOBALS.PARTITION_STRATEGY.equalsIgnoreCase("hdrf")) {
+            output_shared_nodes = new DatWriter("divided_nodes_seed_hdrf/" + GLOBALS.DATASET + "/" + GLOBALS.SEED + "/" + GLOBALS.DATASET + "_" + GLOBALS.P + "parts" + "/" + GLOBALS.OUTPUT_FILE_NAME + "shared" + ".txt");
+            for (int i = 0; i < GLOBALS.P; i++) {
+                output_files[i] = new DatWriter("divided_nodes_seed_hdrf/" + GLOBALS.DATASET + "/" + GLOBALS.SEED + "/" + GLOBALS.DATASET + "_" + GLOBALS.P + "parts" + "/" + GLOBALS.OUTPUT_FILE_NAME + String.valueOf(i) + ".txt");
+            }
         }
+        else if (GLOBALS.PARTITION_STRATEGY.equalsIgnoreCase("hashing")) {
+            output_shared_nodes = new DatWriter("divided_nodes_seed_hashing/" + GLOBALS.DATASET + "/" + GLOBALS.SEED + "/" + GLOBALS.DATASET + "_" + GLOBALS.P + "parts" + "/" + GLOBALS.OUTPUT_FILE_NAME + "shared" + ".txt");
+            for (int i = 0; i < GLOBALS.P; i++) {
+                output_files[i] = new DatWriter("divided_nodes_seed_hashing/" + GLOBALS.DATASET + "/" + GLOBALS.SEED + "/" + GLOBALS.DATASET + "_" + GLOBALS.P + "parts" + "/" + GLOBALS.OUTPUT_FILE_NAME + String.valueOf(i) + ".txt");
+            }
+        }
+        else {
+            output_shared_nodes = new DatWriter("divided_nodes_seed/" + GLOBALS.DATASET + "/" + GLOBALS.SEED + "/" + GLOBALS.DATASET + "_" + GLOBALS.P + "parts_top" + (int) (GLOBALS.K * 100) + "/" + GLOBALS.OUTPUT_FILE_NAME + "shared" + ".txt");
+            for (int i = 0; i < GLOBALS.P; i++) {
+                output_files[i] = new DatWriter("divided_nodes_seed/" + GLOBALS.DATASET + "/" + GLOBALS.SEED + "/" + GLOBALS.DATASET + "_" + GLOBALS.P + "parts_top" + (int) (GLOBALS.K * 100) + "/" + GLOBALS.OUTPUT_FILE_NAME + String.valueOf(i) + ".txt");
+            }
+        }
+
+
         for (int x : vertex_ids){
             Record record = state.getRecord(x);
             Iterator<Byte> partitions =  record.getPartitions();

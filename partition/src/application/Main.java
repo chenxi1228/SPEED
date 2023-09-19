@@ -12,7 +12,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
-import org.omg.CORBA.BAD_POLICY;
 import output.Output;
 import output.Statistics;
 import partitioner.Partitioner;

@@ -19,7 +19,9 @@ public class CoordinatedPartitionState implements PartitionState{
     int MAX_LOAD;
     int DROP;
     int BIG_EDGE; //Edges between big nodes
-    DatWriter out; //to print the final partition of each edge
+    //DatWriter out; //to print the final partition of each edge
+    private DatWriter dropped_info;
+    private DatWriter[] output_files;
 
     public CoordinatedPartitionState(Globals G) {
         this.GLOBALS = G;
@@ -34,6 +36,12 @@ public class CoordinatedPartitionState implements PartitionState{
         }        
         MAX_LOAD = 0;
         DROP = 0;
+
+        dropped_info = new DatWriter("dropped_edges/" + "dropped_edge_info.txt");
+        //output_files = new DatWriter[GLOBALS.P];
+       // for (int i = 0; i < GLOBALS.P; i++) {
+        //    output_files[i] = new DatWriter("dropped_edges/" + "outbound" + String.valueOf(i) + ".txt");
+       // }
         //if (GLOBALS.OUTPUT_FILE_NAME!=null){
        //     out = new DatWriter(GLOBALS.OUTPUT_FILE_NAME+".edges");
         //}
@@ -91,6 +99,19 @@ public class CoordinatedPartitionState implements PartitionState{
             MAX_LOAD = new_value;
         }
        // if (GLOBALS.OUTPUT_FILE_NAME!=null){
+        //    out.write(e+": "+m+"\n");
+        //}
+    }
+
+    @Override
+    public synchronized void writedropinfo(int u, int v, double ts, int partu, int partv) {
+        dropped_info.write(u + " " + v + " " + ts + " " + partu + " " + partv + "\n");
+        //int part_u = ((partu & 0xFF));
+        //int part_v = ((partv & 0xFF));
+        //System.out.println(u);
+        //output_files[part_u].write(v + "\n");
+        //output_files[part_v].write(u + "\n");
+        // if (GLOBALS.OUTPUT_FILE_NAME!=null){
         //    out.write(e+": "+m+"\n");
         //}
     }

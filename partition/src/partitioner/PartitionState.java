@@ -3,7 +3,6 @@
 package partitioner;
 
 import core.Edge;
-import org.omg.CORBA.PUBLIC_MEMBER;
 
 import java.util.SortedSet;
 
@@ -13,6 +12,7 @@ public interface PartitionState {
     public void incrementMachineLoad(int m, Edge e);
     public int getMinLoad();
     public int getMaxLoad();
+    public void writedropinfo(int u, int v, double ts, int partu, int partv);
     public int getDropNum();
     public int getBigEdgeNum();
     public void incrementDropNum();

@@ -8,6 +8,8 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
+
+import output.DatWriter;
 import partitioner.PartitionState;
 import partitioner.coordinated_state.CoordinatedPartitionState;
 import partitioner.PartitionStrategy;
@@ -198,11 +200,13 @@ public class MyMethod implements PartitionStrategy {
         }
 
 
-        output_file = new DatWriter(GLOBALS.OUTPUT_FILE_NAME + "dropped_edge_info.txt")
+        //DatWriter output_file = new DatWriter("dropped_edges/" + "dropped_edge_info.txt");
         // drop the edge
         if (candidates.isEmpty()) {
             state.incrementDropNum();
-            output_file.write(u + " " + v + " " + ts + " " + u_record.getPartitions() + " " + v_record.getPartitions() + "\n")
+            //System.out.println(u + " " + v + " " + ts + " " + u_record.getPartitions().next() + " " + v_record.getPartitions().next());
+            state.writedropinfo(u,v,ts,u_record.getPartitions().next(),v_record.getPartitions().next());
+            //output_file.write(u + " " + v + " " + ts + " " + u_record.getPartitions().next() + " " + v_record.getPartitions().next() + "\n");
         } else {
             //*** PICK A RANDOM ELEMENT FROM CANDIDATES
             Random r = new Random(seed);
@@ -250,5 +254,7 @@ public class MyMethod implements PartitionStrategy {
         //*** RELEASE LOCK
         u_record.releaseLock();
         v_record.releaseLock();
+
+       // output_file.close();
     }
 }
