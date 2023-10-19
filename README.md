@@ -1,5 +1,5 @@
 # SPEED
-Codes for the paper "SPEED: Streaming Partition and Parallel Acceleration for Temporal Interaction Graph Embedding" submitted to ICDE'24
+Codes for the paper "SPEED: Streaming Partition and Parallel Acceleration for Temporal Interaction Graph Embedding"
 
 # Data
 
